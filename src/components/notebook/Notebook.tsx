@@ -5,7 +5,6 @@ import { NotebookSidebar } from "./NotebookSidebar";
 import { TiptapEditor } from "./TiptapEditor";
 import { Input } from "@/components/ui/input";
 import { Loader2, Cloud, Check } from "lucide-react";
-import { useDebounce } from "@/lib/hooks/use-debounce"; // Assuming this exists or I'll implement a simple one
 
 // Simple debounce hook implementation if not available
 function useDebounceValue<T>(value: T, delay: number): T {
