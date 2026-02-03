@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IQuizAttempt extends Document {
+  userId: mongoose.Types.ObjectId;
   quizId: mongoose.Types.ObjectId;
   topicId: mongoose.Types.ObjectId;
   subjectId: mongoose.Types.ObjectId;
@@ -27,6 +28,7 @@ export interface IQuizAttempt extends Document {
 
 const QuizAttemptSchema: Schema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     quizId: { type: Schema.Types.ObjectId, ref: "Quiz", required: true },
     topicId: { type: Schema.Types.ObjectId, ref: "Topic", required: true },
     subjectId: { type: Schema.Types.ObjectId, ref: "Subject", required: true },

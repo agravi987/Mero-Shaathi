@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface INote extends Document {
+  userId: mongoose.Types.ObjectId;
   topicId: mongoose.Types.ObjectId;
   title: string;
   content: string; // Markdown/Rich text
@@ -13,6 +14,7 @@ export interface INote extends Document {
 
 const NoteSchema: Schema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     topicId: { type: Schema.Types.ObjectId, ref: "Topic", required: true },
     title: { type: String, required: true },
     content: { type: String, default: "" },
@@ -20,7 +22,7 @@ const NoteSchema: Schema = new Schema(
     isImportant: { type: Boolean, default: false },
     needsRevision: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Note: Model<INote> =

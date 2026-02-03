@@ -5,9 +5,19 @@ import Topic from "@/lib/models/Topic";
 import Note from "@/lib/models/Note";
 import Quiz from "@/lib/models/Quiz";
 import { getAIProvider } from "@/lib/ai/factory";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export async function POST(req: NextRequest) {
   await dbConnect();
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
 
   try {
     const body = await req.json();
@@ -21,7 +31,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Fetch Topic to verify and get name
-    const topic = await Topic.findById(topicId);
+    const topic = await Topic.findOne({
+      _id: topicId,
+      userId: session.user.id,
+    });
     if (!topic) {
       return NextResponse.json(
         { success: false, error: "Topic not found" },
@@ -30,7 +43,9 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Fetch Notes for context
-    const notes = await Note.find({ topicId }).sort({ updatedAt: -1 }).limit(3);
+    const notes = await Note.find({ topicId, userId: session.user.id })
+      .sort({ updatedAt: -1 })
+      .limit(3);
     const context = notes.map((n) => n.content).join("\n\n");
 
     // 3. Determine Hybrid Ratios
@@ -39,19 +54,16 @@ export async function POST(req: NextRequest) {
     // AI Quota: 40% (or remainder)
 
     const dbTarget = Math.floor(count * 0.6);
-    // Fetch all available questions for this topic/difficulty from DB to sample from
-    // Note: We need to filter by quizId? Actually, questions are linked to a Quiz usually.
-    // If we want a pool of questions, we might need to search across all quizzes in this topic.
-    // Or, we assume questions are reusable.
-    // Wait, Question model has `quizId`. We should probably search questions where quizId belongs to a quiz in this topic?
-    // This is expensive.
-    // ALTERNATIVELY: We can search questions by looking up quizzes for this topic.
 
-    const quizzesInTopic = await Quiz.find({ topicId }).select("_id");
+    const quizzesInTopic = await Quiz.find({
+      topicId,
+      userId: session.user.id,
+    }).select("_id");
     const quizIds = quizzesInTopic.map((q) => q._id);
 
     const availableDbQuestions = await Question.find({
       quizId: { $in: quizIds },
+      userId: session.user.id,
       difficulty: difficulty,
     }).limit(50); // Fetch a reasonable pool to sample from
 
@@ -83,9 +95,10 @@ export async function POST(req: NextRequest) {
       // Let's create a new Quiz document titled "Generated Quiz - [Date]"
 
       const newQuiz = await Quiz.create({
+        userId: session.user.id,
         topicId,
         title: `Generated Quiz: ${topic.name}`,
-        description: `AI Generated ${difficulty} quiz on ${new Date().toLocaleDateString()}`,
+        description: `✨ AI-Powered ${difficulty} quiz • Generated ${new Date().toLocaleDateString()}`,
         difficulty,
         timeLimit: count * 60, // 1 min per question approx
         questions: [], // Will populate
@@ -96,6 +109,7 @@ export async function POST(req: NextRequest) {
       const savedAiQuestions = await Promise.all(
         rawAiQuestions.map(async (q: any, i: number) => {
           return Question.create({
+            userId: session.user.id,
             quizId: newQuiz._id,
             type: "mcq",
             question: q.question,
@@ -119,6 +133,7 @@ export async function POST(req: NextRequest) {
       const duplicatedDbQuestions = await Promise.all(
         selectedDbQuestions.map(async (q) => {
           return Question.create({
+            userId: session.user.id,
             quizId: newQuiz._id, // Link to new quiz
             type: q.type,
             question: q.question,
@@ -151,6 +166,7 @@ export async function POST(req: NextRequest) {
       // Only DB questions (unlikely given requirement, but possible if DB is huge)
       // Similar logic: Create new quiz, duplicate questions.
       const newQuiz = await Quiz.create({
+        userId: session.user.id,
         topicId,
         title: `Generated Quiz: ${topic.name}`,
         description: `Generated from Question Bank`,
@@ -163,6 +179,7 @@ export async function POST(req: NextRequest) {
       const duplicatedQuestions = await Promise.all(
         selectedDbQuestions.map(async (q) => {
           return Question.create({
+            userId: session.user.id,
             quizId: newQuiz._id,
             type: q.type,
             question: q.question,

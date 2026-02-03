@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface ITopic extends Document {
+  userId: mongoose.Types.ObjectId;
   subjectId: mongoose.Types.ObjectId;
   name: string;
   description?: string;
@@ -12,13 +13,14 @@ export interface ITopic extends Document {
 
 const TopicSchema: Schema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     subjectId: { type: Schema.Types.ObjectId, ref: "Subject", required: true },
     name: { type: String, required: true },
     description: { type: String },
     order: { type: Number, default: 0 },
     tags: [{ type: String }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Topic: Model<ITopic> =

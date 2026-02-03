@@ -5,13 +5,23 @@ import Note from "@/lib/models/Note";
 import Quiz from "@/lib/models/Quiz";
 import Topic from "@/lib/models/Topic";
 import Subject from "@/lib/models/Subject";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 
 export async function GET(req: NextRequest) {
   await dbConnect();
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
 
   try {
     // Fetch latest QuizAttempts
-    const attempts = await QuizAttempt.find()
+    const attempts = await QuizAttempt.find({ userId: session.user.id })
       .sort({ createdAt: -1 })
       .limit(20)
       .populate({
@@ -25,7 +35,7 @@ export async function GET(req: NextRequest) {
       });
 
     // Fetch latest Notes
-    const notes = await Note.find()
+    const notes = await Note.find({ userId: session.user.id })
       .sort({ createdAt: -1 })
       .limit(20)
       .populate({

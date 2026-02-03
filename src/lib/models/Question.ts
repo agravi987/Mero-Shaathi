@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IQuestion extends Document {
+  userId: mongoose.Types.ObjectId;
   quizId: mongoose.Types.ObjectId;
   type: "mcq" | "trueFalse" | "fillBlank";
   question: string;
@@ -16,6 +17,7 @@ export interface IQuestion extends Document {
 
 const QuestionSchema: Schema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     quizId: { type: Schema.Types.ObjectId, ref: "Quiz", required: true },
     type: {
       type: String,
@@ -34,7 +36,7 @@ const QuestionSchema: Schema = new Schema(
     },
     order: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Question: Model<IQuestion> =

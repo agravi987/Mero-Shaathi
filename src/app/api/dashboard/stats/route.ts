@@ -2,19 +2,31 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db";
 import Subject from "@/lib/models/Subject";
 import QuizAttempt from "@/lib/models/QuizAttempt";
-import Note from "@/lib/models/Note";
-import Topic from "@/lib/models/Topic";
 import Quiz from "@/lib/models/Quiz";
+import Topic from "@/lib/models/Topic";
+import Note from "@/lib/models/Note";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/auth";
 import { startOfDay } from "date-fns";
 
 export async function GET() {
   await dbConnect();
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
 
   try {
     const today = new Date();
 
     // 1. Total Subjects
-    const totalSubjects = await Subject.countDocuments();
+    const totalSubjects = await Subject.countDocuments({
+      userId: session.user.id,
+    });
 
     // 2. Revisions Due (Topics that have a quiz attempt due for revision)
     // We can reuse the logic from verify revisions or just count them here.
@@ -24,6 +36,7 @@ export async function GET() {
 
     // Aggregate to get unique latest attempts per quiz
     const revisionsDueAggregation = await QuizAttempt.aggregate([
+      { $match: { userId: session.user.id } },
       { $sort: { createdAt: -1 } },
       { $group: { _id: "$quizId", doc: { $first: "$$ROOT" } } },
       { $replaceRoot: { newRoot: "$doc" } },
@@ -37,6 +50,7 @@ export async function GET() {
     // 3. Quiz Accuracy (Average Percentage of all attempts)
     // Or maybe simple average of percentages.
     const accuracyAggregation = await QuizAttempt.aggregate([
+      { $match: { userId: session.user.id } },
       {
         $group: {
           _id: null,
@@ -53,7 +67,7 @@ export async function GET() {
 
     // 5. Recent Activity
     // Fetch latest QuizAttempts
-    const recentAttempts = await QuizAttempt.find()
+    const recentAttempts = await QuizAttempt.find({ userId: session.user.id })
       .sort({ createdAt: -1 })
       .limit(3)
       .populate({
@@ -67,7 +81,7 @@ export async function GET() {
       });
 
     // Fetch latest Notes
-    const recentNotes = await Note.find()
+    const recentNotes = await Note.find({ userId: session.user.id })
       .sort({ createdAt: -1 })
       .limit(3)
       .populate({

@@ -32,7 +32,17 @@
 - **History**: A chronological timeline of your entire learning journey.
 - **Charts**: Visual breakdown of Subject Mastery and Daily Activity streaks.
 
-### 5. Modern UI/UX 🎨
+### 5. Secure Authentication 🔐
+
+- **NextAuth.js Integration**: Secure, production-ready authentication system.
+- **User Registration \u0026 Login**: Create account with email and password.
+- **Password Security**: Passwords are hashed with bcryptjs before storage.
+- **Session Management**: JWT-based sessions for fast, stateless authentication.
+- **Protected Routes**: Automatic redirection for unauthenticated users.
+- **User Isolation**: All data (subjects, notes, quizzes) is strictly user-specific.
+- **Show/Hide Password**: User-friendly password visibility toggle on auth forms.
+
+### 6. Modern UI/UX 🎨
 
 - **Theme System**: "Academic" aesthetic with global Light/Dark mode toggle (Notion-like feel).
 - **Responsive**: Fully functional on desktop and mobile.
@@ -46,6 +56,7 @@
 - **UI Components**: [Shadcn/ui](https://ui.shadcn.com/), [Lucide Icons](https://lucide.dev/)
 - **Charts**: [Recharts](https://recharts.org/)
 - **Editor**: [Tiptap](https://tiptap.dev/)
+- **Authentication**: [NextAuth.js](https://next-auth.js.org/), [bcryptjs](https://www.npmjs.com/package/bcryptjs)
 - **Backend**: Next.js API Routes (Serverless)
 - **Database**: [MongoDB](https://www.mongodb.com/) (via Mongoose)
 - **AI Provider**: [Groq](https://groq.com/) (Llama-3.1-8b model)
@@ -84,7 +95,13 @@
 
     # AI Service (Get free key from console.groq.com)
     GROQ_API_KEY=gsk_your_api_key_here
+
+    # NextAuth Configuration
+    NEXTAUTH_SECRET=your-super-secret-key-change-this-in-production-min-32-chars
+    NEXTAUTH_URL=http://localhost:3000
     ```
+
+    > **Note**: Generate a secure `NEXTAUTH_SECRET` using: `openssl rand -base64 32`
 
 4.  **Run the development server**
 
@@ -93,7 +110,32 @@
     ```
 
 5.  **Open in Browser**
-    Visit `http://localhost:3000` to start learning!
+    Visit `http://localhost:3000`
+
+6.  **Create Your Account**
+    - You'll be redirected to `/login`
+    - Click "Sign up" to create a new account
+    - After registration, sign in with your credentials
+    - Start organizing your learning journey!
+
+---
+
+## 🔐 Authentication
+
+Mero Shaathi uses **NextAuth.js** for secure authentication:
+
+- **Registration**: Navigate to `/register` to create a new account
+- **Login**: Access `/login` to sign in
+- **Protected Routes**: All dashboard routes require authentication
+- **User Isolation**: Each user's data (subjects, notes, quizzes, progress) is completely isolated
+- **Session Management**: Sessions use JWT tokens and persist across browser refreshes
+- **Profile**: View your profile and statistics at `/profile`
+
+**Security Features:**
+
+- Passwords are hashed with bcryptjs (never stored in plain text)
+- Protected API routes require valid session
+- Middleware automatically redirects unauthenticated users to login
 
 ---
 
@@ -105,10 +147,14 @@ src/
 │   ├── (dashboard)/      # Main App Layout (Sidebar + Navbar)
 │   │   ├── history/      # Activity Log Page
 │   │   ├── progress/     # Analytics Page
+│   │   ├── profile/      # User Profile Page
 │   │   ├── revision/     # Due Reviews Page
 │   │   ├── subjects/     # Subject & Topic Management
 │   │   └── page.tsx      # Dashboard Home
+│   ├── login/            # Login Page
+│   ├── register/         # Registration Page
 │   └── api/              # Backend API Routes
+│       ├── auth/         # Authentication (NextAuth + Register)
 │       ├── dashboard/    # Stats Aggregation
 │       ├── history/      # Activity Logs
 │       ├── quizzes/      # Quiz Logic & Generation
@@ -116,12 +162,15 @@ src/
 ├── components/           # Reusable UI Components
 │   ├── layout/           # Sidebar, Navbar
 │   ├── notebook/         # Tiptap Editor Components
+│   ├── providers/        # AuthProvider, ThemeProvider
 │   ├── quiz/             # Quiz Player & Generator
 │   └── ui/               # Shadcn Primitives
 ├── lib/                  # Utilities & Logic
 │   ├── ai/               # AI Service Abstraction (Groq)
-│   ├── models/           # Mongoose Schemas (Subject, Note, Quiz)
+│   ├── models/           # Mongoose Schemas (User, Subject, Note, Quiz)
 │   └── sm2.ts            # Spaced Repetition Algorithm
+├── auth.ts               # NextAuth Configuration
+├── middleware.ts         # Route Protection Middleware
 └── ...
 ```
 

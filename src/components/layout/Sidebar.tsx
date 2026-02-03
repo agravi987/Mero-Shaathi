@@ -12,6 +12,7 @@ import {
   Menu,
   Settings,
   History,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -65,7 +66,7 @@ export function Sidebar({ className }: SidebarProps) {
                 variant={pathname === item.href ? "secondary" : "ghost"}
                 className={cn(
                   "w-full justify-start",
-                  pathname === item.href && "bg-secondary font-medium"
+                  pathname === item.href && "bg-secondary font-medium",
                 )}
                 asChild
               >
@@ -82,9 +83,31 @@ export function Sidebar({ className }: SidebarProps) {
             Settings
           </h2>
           <div className="space-y-1">
-            <Button variant="ghost" className="w-full justify-start">
-              <Settings className="mr-2 h-4 w-4" />
-              Preferences
+            <Button
+              variant={pathname === "/profile" ? "secondary" : "ghost"}
+              className={cn(
+                "w-full justify-start",
+                pathname === "/profile" && "bg-secondary font-medium",
+              )}
+              asChild
+            >
+              <Link href="/profile">
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </Link>
+            </Button>
+            <Button
+              variant={pathname === "/settings" ? "secondary" : "ghost"}
+              className={cn(
+                "w-full justify-start",
+                pathname === "/settings" && "bg-secondary font-medium",
+              )}
+              asChild
+            >
+              <Link href="/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                Preferences
+              </Link>
             </Button>
           </div>
         </div>
